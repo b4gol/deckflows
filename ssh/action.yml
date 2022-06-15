@@ -6,7 +6,7 @@ inputs:
     required: true
   key_file:
     description: 'ssh key file name'
-    default: 'id_rsa_github'
+    default: 'id_ecdsa'
     required: false
 runs:
   using: "composite"
