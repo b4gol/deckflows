@@ -1,0 +1,41 @@
+name: 'Check for broken links'
+description: 'Checks for broken links in HTML documents. This occurs in parallel so performance is fast. Both external links and internal links are checked. Internal links are checked by verifying local files. See https://github.com/fastai/fastlinkcheck for more information.'
+inputs:
+  path:
+    description: 'Directory relative to the root of yoru repo to search recursively for HTML files'
+    required: true
+  host:
+    description: 'Host and path (without protocol) of web server.'
+    required: false
+    default: ""
+  config_file:
+    description: 'Location of file with urls to ignore.'
+    required: false
+    default: ""
+  exit_on_found:
+    description: 'Setting this to any value will result in this step exiting with a status code of 1 if broken links are found.'
+    required: false
+    default: ""
+outputs:
+  bool_broken_links: 
+    description: "Returns 'True' or 'False' depending on if broken links were found."
+    value: ${{ steps.links.outputs.bool_broken_links }}
+  logs_broken_links:
+    description: "Returns the raw logs which list all of the broken links and their locations."
+    value: ${{ steps.links.outputs.logs_broken_links }}
+runs:
+  using: "composite"
+  steps: 
+    - run: pip install fastlinkcheck && chmod -R 777 ${{ inputs.path }}
+      shell: bash
+    - name: Find broken links
+      id: links
+      run: |
+        import sys
+        from fastlinkcheck import link_check
+        lm = link_check(path="${{ inputs.path }}", 
+                        host="${{ inputs.host }}", 
+                        config_file="${{ inputs.config_file }}", 
+                        actions_output=True, print_logs=True)
+        if lm and "${{ inputs.exit_on_found }}": sys.exit(1)
+      shell: python
