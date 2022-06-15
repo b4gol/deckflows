@@ -10,7 +10,7 @@ jobs:
     name: test-open-issue
     steps:
     - uses: actions/setup-python@v2
-    - uses: fastai/workflows/open_issue@master
+    - uses: B4gol/deckflows/open_issue@decent
       id: open_issue
       with:
         repo: ${{ github.repository }}
