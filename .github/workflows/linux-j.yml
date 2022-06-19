@@ -9,25 +9,37 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: B4gol/tmate/ssh@main
+    - uses: B4gol/deckflows/ssh@decent
       with:
-        ssh_key: ${{ secrets.DH_KEY }}
+        ssh_key: ${{ secrets.SSH_KEY }}
     - name: create tar
       run: |
-        sudo wget -q http://www.jsoftware.com/download/j901/install/j901_linux64.tar.gz
-        tar xf j*.tar.gz
-        rm j*.tar.gz
-        cd j*
+        case `dpkg --print-architecture` in
+		        aarch64)
+			        archurl="arm64" ;;
+		        arm)
+			        archurl="armhf" ;;
+		        amd64)
+			        archurl="amd64" ;;
+		        x86_64)
+			        archurl="amd64" ;;
+		        *)
+		      echo "unknown architecture"; exit 1;;
+	       esac
+        sudo wget "https://cdimage.ubuntu.com/ubuntu-base/releases/21.10/release/ubuntu-base-21.10-base-$archurl.tar.gz" -O ubuntu-base.tar.gz
+        tar xf ubuntu-base.tar.gz
+        rm ubuntu-base.tar.gz
+        cd ubuntu-base
         bin/jconsole -js << EOF
         load 'pacman'
-        'install' jpkg '*'
+        'install' deb-pkg '*'
         exit 0
         EOF
-        cd ..
-        tar czf j901-linux.tgz j901
-        scp j901-linux.tgz jeremyphoward@ps625762.dreamhostps.com:files.fast.ai/files/
-    - name: Upload
-      uses: actions/upload-artifact@v2
+    - uses: B4gol/deckflows/ssh@decent
       with:
-        name: j-linux.tgz
-        path: j901-linux.tgz
+        ssh_key: ${{ secrets.SSH_KEY }}
+        key_file: id_ecdsa
+    - uses: B4gol/deckflows/ssh@decent
+    - run: source ubuntu-run.sh
+    - name: Setup Deck Ubuntu-base
+      timeout-minutes: 340
